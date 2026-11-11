@@ -6,12 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test test/*.test.mjs",
+    "check:sandbox": "node --env-file=.env.local scripts/check-sandbox.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@paypal/agent-toolkit": "^1.11.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
@@ -22,5 +28,6 @@
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
-  }
+  },
+  "license": "MIT"
 }
