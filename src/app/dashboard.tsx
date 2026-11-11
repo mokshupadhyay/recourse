@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Case, CaseEvent } from "@/lib/store";
 import type { Finding, MandateTerms } from "@/lib/mandate";
-import { AGENTS, type Ledger, type LedgerEntry, type Level } from "@/lib/ledger";
+import { AGENTS, type Ledger } from "@/lib/ledger";
 import { LISTINGS, MERCHANTS } from "@/lib/catalog";
+import { CasesGrid, LedgerSearch, PartiesGrid, useLedgerSearch } from "./ledger-grids";
 
 type Config = { paypal: boolean; claude: boolean };
 type Overview = { cases: Case[]; config: Config; ledger: Ledger; sampleHistory: boolean };
@@ -92,7 +93,6 @@ const CLAIM_LABEL: Record<string, string> = {
   not_received: "Buyer says it never arrived",
   other: "Another kind of complaint",
 };
-const LEVEL_TONE: Record<Level, Tone> = { ok: "good", watch: "warn", flagged: "bad" };
 
 const STEPS = ["Mandate signed", "Agent shops", "Buyer pays", "Complaint", "Outcome"];
 
@@ -207,7 +207,7 @@ export default function Dashboard() {
         )}
 
         {tab === "ledger" && ledger && (
-          <LedgerView ledger={ledger} sampleHistory={sampleHistory} busy={!!busy} onToggle={(on) => run("sample", async () => { await api("/api/ledger", { sampleHistory: on }); })} />
+          <LedgerView ledger={ledger} cases={cases} onOpen={(id) => { setSelectedId(id); setTab("cases"); }} sampleHistory={sampleHistory} busy={!!busy} onToggle={(on) => run("sample", async () => { await api("/api/ledger", { sampleHistory: on }); })} />
         )}
 
         {tab === "cases" && (
@@ -593,7 +593,8 @@ function Timeline({ events }: { events: CaseEvent[] }) {
 
 // --- Trust ledger tab ---
 
-function LedgerView({ ledger, sampleHistory, busy, onToggle }: { ledger: Ledger; sampleHistory: boolean; busy: boolean; onToggle: (on: boolean) => void }) {
+function LedgerView({ ledger, cases, onOpen, sampleHistory, busy, onToggle }: { ledger: Ledger; cases: Case[]; onOpen: (id: string) => void; sampleHistory: boolean; busy: boolean; onToggle: (on: boolean) => void }) {
+  const [search, setSearch] = useLedgerSearch();
   return (
     <div className="space-y-5">
       <section className="card flex flex-wrap items-center justify-between gap-4">
@@ -601,43 +602,28 @@ function LedgerView({ ledger, sampleHistory, busy, onToggle }: { ledger: Ledger;
           <h2 className="text-lg font-semibold text-slate-900">Trust ledger</h2>
           <p className="text-sm text-slate-600">A track record built from how cases ended. Each mark is a plain count, and each one changes what Recourse does next.</p>
         </div>
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" className="h-4 w-4 accent-slate-900" checked={sampleHistory} disabled={busy} onChange={(e) => onToggle(e.target.checked)} />
-          Include sample history
-        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <LedgerSearch value={search} onChange={setSearch} />
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" className="h-4 w-4 accent-slate-900" checked={sampleHistory} disabled={busy} onChange={(e) => onToggle(e.target.checked)} />
+            Include sample history
+          </label>
+        </div>
       </section>
-      <div className="grid gap-5 md:grid-cols-3">
-        <LedgerColumn title="Agents" hint="Do they stay inside the mandate?" entries={ledger.agents} />
-        <LedgerColumn title="Buyers" hint="Do their complaints hold up?" entries={ledger.buyers} />
-        <LedgerColumn title="Shops" hint="Do their listings and deliveries hold up?" entries={ledger.merchants} />
-      </div>
-      {sampleHistory && <p className="text-xs text-slate-500">Rows marked “sample” come from illustrative past cases, not from PayPal. Unmarked rows include cases run here.</p>}
-    </div>
-  );
-}
 
-function LedgerColumn({ title, hint, entries }: { title: string; hint: string; entries: LedgerEntry[] }) {
-  return (
-    <section className="card">
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-      <p className="text-xs text-slate-500">{hint}</p>
-      {entries.length === 0 && <p className="mt-3 text-sm text-slate-500">Nothing on record yet.</p>}
-      <ul className="mt-3 space-y-3">
-        {entries.map((e) => (
-          <li key={e.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className={`h-2 w-2 rounded-full ${DOT[LEVEL_TONE[e.level]]}`} />
-              <span className="font-medium text-slate-900">{e.name}</span>
-              <Tag tone={LEVEL_TONE[e.level]}>{e.level}</Tag>
-              {e.sampleOnly && <Tag tone="neutral">sample</Tag>}
-            </div>
-            <p className="mt-1 text-xs text-slate-500">{e.facts.join(" · ")}</p>
-            <p className="mt-2 text-slate-700">{e.reason}</p>
-            {e.level !== "ok" && <p className={`mt-2 rounded-md px-2 py-1.5 text-xs ${TONE[LEVEL_TONE[e.level]]}`}><b>Effect: </b>{e.consequence}</p>}
-          </li>
-        ))}
-      </ul>
-    </section>
+      <section className="card">
+        <h3 className="text-sm font-semibold text-slate-900">Agents, buyers and shops</h3>
+        <p className="mb-3 text-xs text-slate-500">Sort or filter any column. Flagged parties are listed first.</p>
+        <PartiesGrid ledger={ledger} search={search} />
+        {sampleHistory && <p className="mt-3 text-xs text-slate-500">Rows marked “Sample history” come from illustrative past cases, not from PayPal.</p>}
+      </section>
+
+      <section className="card">
+        <h3 className="text-sm font-semibold text-slate-900">Case log</h3>
+        <p className="mb-3 text-xs text-slate-500">Every case run here, with its PayPal order and refund. Click a row to open the case.</p>
+        <CasesGrid cases={cases} search={search} onOpen={onOpen} />
+      </section>
+    </div>
   );
 }
 

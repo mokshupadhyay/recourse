@@ -31,6 +31,8 @@ export type LedgerEntry = {
   id: string;
   name: string;
   level: Level;
+  orders: number;
+  problems: number; // mandate breaches (agent), rejected claims (buyer), or bad listings and deliveries (shop)
   facts: string[];
   reason: string;
   consequence: string;
@@ -84,6 +86,8 @@ export function buildLedger(
       id,
       name: names[id] ?? id,
       level,
+      orders,
+      problems: breaches,
       facts: [count(orders, "order"), count(breaches, "mandate breach", "mandate breaches")],
       reason:
         breaches === 0
@@ -108,6 +112,8 @@ export function buildLedger(
       id,
       name: names[id] ?? id,
       level,
+      orders: rs.filter((r) => r.ordered).length,
+      problems: rejected,
       facts: [count(rs.filter((r) => r.ordered).length, "order"), count(complaints, "complaint"), `${rejected} rejected`],
       reason:
         rejected === 0
@@ -142,6 +148,8 @@ export function buildLedger(
       id,
       name: names[id] ?? id,
       level,
+      orders: rs.filter((r) => r.ordered).length,
+      problems: injected + undelivered,
       facts: [count(rs.filter((r) => r.ordered).length, "order"), count(skus.length, "listing with hidden text", "listings with hidden text")],
       reason: reasons.length > 0 ? `${reasons.join("; ")}.` : "No problems on record.",
       consequence:

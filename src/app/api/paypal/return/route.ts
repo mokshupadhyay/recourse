@@ -5,9 +5,11 @@ import { findCaseByOrder, record, updateCase } from "@/lib/store";
 // We capture the payment, then return to the dashboard.
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  // Behind a host's proxy the request origin can be an internal address, so prefer the public one.
+  const home = process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? url.origin;
   const orderId = url.searchParams.get("token");
   const current = orderId ? findCaseByOrder(orderId) : undefined;
-  if (!current || !orderId) return Response.redirect(new URL("/?error=unknown_order", url.origin));
+  if (!current || !orderId) return Response.redirect(new URL("/?error=unknown_order", home));
 
   try {
     if (current.status === "AWAITING_PAYER_APPROVAL") {
@@ -27,5 +29,5 @@ export async function GET(request: Request) {
   } catch (error) {
     record(current.id, "paypal", "capture_failed", error instanceof Error ? error.message.slice(0, 300) : String(error));
   }
-  return Response.redirect(new URL(`/?case=${current.id}`, url.origin));
+  return Response.redirect(new URL(`/?case=${current.id}`, home));
 }

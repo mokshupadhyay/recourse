@@ -1,0 +1,21 @@
+# Render blueprint: New > Blueprint > pick this repo. Render asks for the three secrets below.
+services:
+  - type: web
+    name: recourse
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/cases
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: PAYPAL_CLIENT_ID # PayPal sandbox app (never a live key)
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # A public demo spends the owner's Claude credit, so it runs on the cheapest model.
+      - key: RECOURSE_MODEL
+        value: claude-haiku-5-5

@@ -53,6 +53,24 @@ Testing Tools > Sandbox Accounts in the PayPal dashboard.
 Without a Claude key the app still runs: use "Use demo terms" and the simulated compromised agent.
 Without PayPal keys only the pre-payment gate path works, because it stops before any PayPal call.
 
+## Sponsor tools
+
+- **AG Grid** (`ag-grid-react`, Community edition) powers the Trust ledger tab: one grid for agents, buyers and
+  shops, and one case log with each case's PayPal order and refund. Both sort and filter on any column, share a
+  quick-search box, and use custom cell renderers for standing and outcome; clicking a case-log row opens the case.
+  The code is in `src/app/ledger-grids.tsx`.
+- **Render** hosts the demo from `render.yaml`.
+
+## Deploy on Render
+
+1. In Render choose **New > Blueprint** and pick this repository. `render.yaml` defines one free web service.
+2. When asked, enter `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` (sandbox app) and `ANTHROPIC_API_KEY`.
+3. Deploy. Recourse reads Render's `RENDER_EXTERNAL_URL`, so PayPal returns buyers to the hosted address with
+   no extra setting.
+
+The blueprint sets `RECOURSE_MODEL=claude-haiku-5-5` so a public demo spends little Claude credit. Case data
+is a file on the service's disk, so it resets on each deploy or restart.
+
 ## Demo script
 
 **Scene 1: the agent is tricked.**

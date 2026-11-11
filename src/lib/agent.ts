@@ -15,7 +15,8 @@ import { AppError } from "./errors";
 import { AGENTS, isFlagged } from "./ledger";
 import { currentLedger } from "./trust";
 
-const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
+// On Render, RENDER_EXTERNAL_URL is the service's public address, so PayPal can send buyers back.
+const APP_URL = process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000";
 
 type OrderArgs = {
   merchantId: string;

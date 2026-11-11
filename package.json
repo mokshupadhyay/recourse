@@ -8,11 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test test/*.test.mjs",
-    "check:sandbox": "node --env-file=.env.local scripts/check-sandbox.mjs"
+    "check:sandbox": "node --env-file=.env.local scripts/check-sandbox.mjs",
+    "demo:stage": "node --env-file=.env.local scripts/stage-demo.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
     "@paypal/agent-toolkit": "^1.11.0",
+    "ag-grid-community": "^36.3.0",
+    "ag-grid-react": "^36.3.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
